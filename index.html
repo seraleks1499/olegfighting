@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Animated Fight Game</title>
+  <style>
+    body {
+      background: #111;
+      color: #fff;
+      font-family: sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .arena {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      margin: 20px 0;
+    }
+    .fighter-container {
+      position: relative;
+    }
+    .mannequin {
+      width: 160px;
+      height: 240px;
+      background: #333;
+      border: 3px solid #666;
+      border-radius: 10px;
+      margin: 0 auto;
+      position: relative;
+    }
+    .part {
+      position: absolute;
+      opacity: 0.4;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .enemy .part:hover,
+    .enemy .part.selected {
+      opacity: 1;
+      background: rgba(255, 0, 0, 0.4);
+    }
+    .player .part:hover,
+    .player .part.selected {
+      opacity: 1;
+      background: rgba(0, 255, 0, 0.3);
+    }
+    .head { top: 10px; left: 50px; width: 60px; height: 30px; }
+    .chest { top: 50px; left: 40px; width: 80px; height: 50px; }
+    .arm { top: 50px; left: 5px; width: 30px; height: 50px; }
+    .leg { top: 110px; left: 50px; width: 60px; height: 60px; }
+    .hp {
+      margin-top: 10px;
+      font-size: 18px;
+    }
+    #log {
+      background: #222;
+      padding: 15px;
+      white-space: pre-wrap;
+      border-radius: 10px;
+      margin-top: 20px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .btn {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .hit-effect {
+      animation: hitFlash 0.3s ease;
+    }
+    @keyframes hitFlash {
+      0% { background-color: yellow; }
+      100% { background-color: inherit; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⚔️ 1v1 ANIMATED FIGHT ⚔️</h1>
+
+  <div class="arena">
+    <div class="fighter-container player">
+      <div class="mannequin">
+        <div class="part head" data-zone="head"></div>
+        <div class="part chest" data-zone="chest"></div>
+        <div class="part arm" data-zone="arm"></div>
+        <div class="part leg" data-zone="leg"></div>
+      </div>
+      <div class="hp" id="playerHP">HP: 100</div>
+    </div>
+    <div class="fighter-container enemy">
+      <div class="mannequin">
+        <div class="part head" data-zone="head"></div>
+        <div class="part chest" data-zone="chest"></div>
+        <div class="part arm" data-zone="arm"></div>
+        <div class="part leg" data-zone="leg"></div>
+      </div>
+      <div class="hp" id="botHP">HP: 100</div>
+    </div>
+  </div>
+
+  <p>🟢 Сначала кликни по врагу — куда ударить. Потом по себе — что защитить.</p>
+  <button class="btn" onclick="fight()">👊 FIGHT!</button>
+
+  <div id="log">Битва начинается...</div>
+
+  <script>
+    let playerHP = 100;
+    let botHP = 100;
+    let attackZone = null;
+    let blockZone = null;
+
+    const damageTable = {
+      head: 30,
+      chest: 25,
+      arm: 20,
+      leg: 15
+    };
+
+    function getRandomZone() {
+      const zones = ["head", "chest", "arm", "leg"];
+      return zones[Math.floor(Math.random() * zones.length)];
+    }
+
+    // Выбор атаки
+    document.querySelectorAll('.enemy .part').forEach(part => {
+      part.addEventListener('click', () => {
+        document.querySelectorAll('.enemy .part').forEach(p => p.classList.remove('selected'));
+        attackZone = part.dataset.zone;
+        part.classList.add('selected');
+      });
+    });
+
+    // Выбор блока
+    document.querySelectorAll('.player .part').forEach(part => {
+      part.addEventListener('click', () => {
+        document.querySelectorAll('.player .part').forEach(p => p.classList.remove('selected'));
+        blockZone = part.dataset.zone;
+        part.classList.add('selected');
+      });
+    });
+
+    // Анимация попадания
+    function animateHit(selector) {
+      const part = document.querySelector(selector);
+      if (part) {
+        part.classList.add("hit-effect");
+        setTimeout(() => part.classList.remove("hit-effect"), 300);
+      }
+    }
+
+    // Сброс
+    function resetSelections() {
+      document.querySelectorAll('.part').forEach(p => p.classList.remove('selected'));
+      attackZone = null;
+      blockZone = null;
+    }
+
+    function fight() {
+      if (playerHP <= 0 || botHP <= 0 || !attackZone || !blockZone) return;
+
+      const botAttack = getRandomZone();
+      const botBlock = getRandomZone();
+
+      let log = "";
+
+      // Атака игрока
+      if (attackZone !== botBlock) {
+        botHP -= damageTable[attackZone];
+        animateHit(`.enemy .${attackZone}`);
+        log += `🧍‍♂️ Вы ударили в ${attackZone} — ${damageTable[attackZone]} урона\\n`;
+      } else {
+        log += `🤖 Бот заблокировал удар в ${attackZone}\\n`;
+      }
+
+      // Атака бота
+      if (botAttack !== blockZone) {
+        playerHP -= damageTable[botAttack];
+        animateHit(`.player .${botAttack}`);
+        log += `🤖 Бот ударил в ${botAttack} — ${damageTable[botAttack]} урона\\n`;
+      } else {
+        log += `🧍‍♂️ Вы заблокировали удар в ${botAttack}\\n`;
+      }
+
+      // Финал
+      if (playerHP <= 0 || botHP <= 0) {
+        log += "\\n💀 Бой окончен!\\n";
+        if (playerHP <= 0 && botHP <= 0) log += "⚔️ Ничья!";
+        else if (playerHP <= 0) log += "🤖 Победа бота!";
+        else log += "🧍‍♂️ Победа игрока!";
+      }
+
+      document.getElementById("playerHP").innerText = `HP: ${Math.max(playerHP, 0)}`;
+      document.getElementById("botHP").innerText = `HP: ${Math.max(botHP, 0)}`;
+      document.getElementById("log").innerText = log;
+
+      resetSelections();
+    }
+  </script>
+
+</body>
+</html>
