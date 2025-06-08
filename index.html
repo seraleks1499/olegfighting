@@ -23,15 +23,19 @@
   duckImg.src = 'duck.png';
   eggImg.src = 'egg.png';
 
-  const waker = {
-    x: canvas.width / 2 - 40,
-    y: canvas.height - 120,
+  const wakerPositions = [
+    { x: 60, y: 420 },   // верхняя левая
+    { x: 60, y: 520 },   // нижняя левая
+    { x: 300, y: 420 },  // верхняя правая
+    { x: 300, y: 520 }   // нижняя правая
+  ];
+
+  let waker = {
+    index: 0,
     width: 80,
-    height: 80,
-    speed: 6
+    height: 80
   };
 
-  // Позиции уток как в "Ну, погоди!": верхняя левая, нижняя левая, верхняя правая, нижняя правая
   const ducks = [
     { x: 70, y: 100 },
     { x: 70, y: 220 },
@@ -41,30 +45,31 @@
 
   const eggPaths = [
     // Левый верхний путь
-    [ {x: 70, y:100}, {x:90, y:150}, {x:110, y:200}, {x:130, y:270} ],
+    [ {x: 70, y:100}, {x:90, y:180}, {x:110, y:260}, {x:80, y:400} ],
     // Левый нижний путь
-    [ {x:70, y:220}, {x:90, y:270}, {x:110, y:320}, {x:130, y:390} ],
+    [ {x:70, y:220}, {x:90, y:300}, {x:110, y:380}, {x:80, y:500} ],
     // Правый верхний путь
-    [ {x:330, y:100}, {x:310, y:150}, {x:290, y:200}, {x:270, y:270} ],
+    [ {x:330, y:100}, {x:310, y:180}, {x:290, y:260}, {x:320, y:400} ],
     // Правый нижний путь
-    [ {x:330, y:220}, {x:310, y:270}, {x:290, y:320}, {x:270, y:390} ]
+    [ {x:330, y:220}, {x:310, y:300}, {x:290, y:380}, {x:320, y:500} ]
   ];
 
   let eggs = [];
-  let eggDropInterval = 2000;
+  let eggDropInterval = 1800;
   let lastEggDrop = 0;
-  let speedMultiplier = 1;
   let score = 0;
 
   function dropEgg() {
     const pathIndex = Math.floor(Math.random() * eggPaths.length);
-    eggs.push({ path: eggPaths[pathIndex], index: 0, speed: 500 / (2 + speedMultiplier) });
+    eggs.push({ path: eggPaths[pathIndex], index: 0, lastMove: Date.now() });
   }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ducks.forEach(duck => ctx.drawImage(duckImg, duck.x, duck.y, 40, 40));
-    ctx.drawImage(wakerImg, waker.x, waker.y, waker.width, waker.height);
+
+    const wPos = wakerPositions[waker.index];
+    ctx.drawImage(wakerImg, wPos.x, wPos.y, waker.width, waker.height);
 
     eggs.forEach(egg => {
       const pos = egg.path[egg.index];
@@ -77,22 +82,25 @@
   }
 
   function update() {
-    if (Date.now() - lastEggDrop > eggDropInterval) {
+    const now = Date.now();
+
+    if (now - lastEggDrop > eggDropInterval) {
       dropEgg();
-      lastEggDrop = Date.now();
-      speedMultiplier += 0.1;
-      eggDropInterval = Math.max(500, eggDropInterval - 20);
+      lastEggDrop = now;
     }
 
     eggs.forEach((egg, i) => {
-      egg.index++;
+      if (now - egg.lastMove > 500) {
+        egg.index++;
+        egg.lastMove = now;
+      }
+
       if (egg.index >= egg.path.length) {
-        const finalPos = egg.path[egg.path.length - 1];
+        const last = egg.path[egg.path.length - 1];
+        const wPos = wakerPositions[waker.index];
         if (
-          finalPos.x + 20 > waker.x &&
-          finalPos.x < waker.x + waker.width &&
-          finalPos.y + 30 > waker.y &&
-          finalPos.y < waker.y + waker.height
+          last.x + 20 > wPos.x && last.x < wPos.x + waker.width &&
+          last.y + 30 > wPos.y && last.y < wPos.y + waker.height
         ) {
           score++;
         }
@@ -108,25 +116,24 @@
   }
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft') waker.x -= waker.speed;
-    if (e.key === 'ArrowRight') waker.x += waker.speed;
-    if (e.key === 'ArrowUp') waker.y -= waker.speed;
-    if (e.key === 'ArrowDown') waker.y += waker.speed;
+    if (e.key === 'ArrowLeft') waker.index = waker.index % 2 === 1 ? waker.index - 1 : waker.index;
+    if (e.key === 'ArrowRight') waker.index = waker.index % 2 === 0 ? waker.index + 1 : waker.index;
+    if (e.key === 'ArrowUp') waker.index = waker.index > 1 ? waker.index - 2 : waker.index;
+    if (e.key === 'ArrowDown') waker.index = waker.index < 2 ? waker.index + 2 : waker.index;
   });
 
-  canvas.addEventListener('touchstart', e => {
-    const touch = e.touches[0];
-    moveTo(touch.clientX, touch.clientY);
-  });
-  canvas.addEventListener('touchmove', e => {
-    const touch = e.touches[0];
-    moveTo(touch.clientX, touch.clientY);
-  });
+  canvas.addEventListener('touchstart', handleTouch);
+  canvas.addEventListener('touchmove', handleTouch);
 
-  function moveTo(x, y) {
+  function handleTouch(e) {
     const rect = canvas.getBoundingClientRect();
-    waker.x = x - rect.left - waker.width / 2;
-    waker.y = y - rect.top - waker.height / 2;
+    const x = e.touches[0].clientX - rect.left;
+    const y = e.touches[0].clientY - rect.top;
+
+    if (x < canvas.width / 2 && y < canvas.height / 2) waker.index = 0;
+    else if (x < canvas.width / 2) waker.index = 1;
+    else if (y < canvas.height / 2) waker.index = 2;
+    else waker.index = 3;
   }
 
   wakerImg.onload = () => requestAnimationFrame(gameLoop);
