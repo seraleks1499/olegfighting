@@ -24,10 +24,10 @@
   eggImg.src = 'egg.png';
 
   const wakerPositions = [
-    { x: 60, y: 420 },   // верхняя левая
-    { x: 60, y: 520 },   // нижняя левая
-    { x: 300, y: 420 },  // верхняя правая
-    { x: 300, y: 520 }   // нижняя правая
+    { x: 60, y: 420 },
+    { x: 60, y: 520 },
+    { x: 300, y: 420 },
+    { x: 300, y: 520 }
   ];
 
   let waker = {
@@ -44,13 +44,9 @@
   ];
 
   const eggPaths = [
-    // Левый верхний путь
     [ {x: 70, y:100}, {x:90, y:180}, {x:110, y:260}, {x:80, y:400} ],
-    // Левый нижний путь
     [ {x:70, y:220}, {x:90, y:300}, {x:110, y:380}, {x:80, y:500} ],
-    // Правый верхний путь
     [ {x:330, y:100}, {x:310, y:180}, {x:290, y:260}, {x:320, y:400} ],
-    // Правый нижний путь
     [ {x:330, y:220}, {x:310, y:300}, {x:290, y:380}, {x:320, y:500} ]
   ];
 
@@ -61,19 +57,29 @@
 
   function dropEgg() {
     const pathIndex = Math.floor(Math.random() * eggPaths.length);
-    eggs.push({ path: eggPaths[pathIndex], index: 0, lastMove: Date.now() });
+    const path = eggPaths[pathIndex];
+    const start = path[0];
+    const next = path[1];
+    eggs.push({
+      path,
+      index: 0,
+      x: start.x,
+      y: start.y,
+      targetX: next.x,
+      targetY: next.y,
+      progress: 0,
+      speed: 0.02
+    });
   }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ducks.forEach(duck => ctx.drawImage(duckImg, duck.x, duck.y, 40, 40));
-
     const wPos = wakerPositions[waker.index];
     ctx.drawImage(wakerImg, wPos.x, wPos.y, waker.width, waker.height);
 
     eggs.forEach(egg => {
-      const pos = egg.path[egg.index];
-      ctx.drawImage(eggImg, pos.x, pos.y, 20, 30);
+      ctx.drawImage(eggImg, egg.x, egg.y, 20, 30);
     });
 
     ctx.fillStyle = 'black';
@@ -83,28 +89,35 @@
 
   function update() {
     const now = Date.now();
-
     if (now - lastEggDrop > eggDropInterval) {
       dropEgg();
       lastEggDrop = now;
     }
 
     eggs.forEach((egg, i) => {
-      if (now - egg.lastMove > 500) {
+      egg.progress += egg.speed;
+      if (egg.progress >= 1) {
         egg.index++;
-        egg.lastMove = now;
-      }
-
-      if (egg.index >= egg.path.length) {
-        const last = egg.path[egg.path.length - 1];
-        const wPos = wakerPositions[waker.index];
-        if (
-          last.x + 20 > wPos.x && last.x < wPos.x + waker.width &&
-          last.y + 30 > wPos.y && last.y < wPos.y + waker.height
-        ) {
-          score++;
+        if (egg.index >= egg.path.length - 1) {
+          const final = egg.path[egg.path.length - 1];
+          const wPos = wakerPositions[waker.index];
+          if (
+            final.x + 20 > wPos.x && final.x < wPos.x + waker.width &&
+            final.y + 30 > wPos.y && final.y < wPos.y + waker.height
+          ) {
+            score++;
+          }
+          eggs.splice(i, 1);
+        } else {
+          egg.x = egg.path[egg.index].x;
+          egg.y = egg.path[egg.index].y;
+          egg.targetX = egg.path[egg.index + 1].x;
+          egg.targetY = egg.path[egg.index + 1].y;
+          egg.progress = 0;
         }
-        eggs.splice(i, 1);
+      } else {
+        egg.x = egg.path[egg.index].x + (egg.targetX - egg.path[egg.index].x) * egg.progress;
+        egg.y = egg.path[egg.index].y + (egg.targetY - egg.path[egg.index].y) * egg.progress;
       }
     });
   }
