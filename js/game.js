@@ -57,7 +57,7 @@ const Game = {
 
   // Set up a new mob
   updateMob() {
-    this.mobMaxHp = 25 + this.mobLevel * 10;
+    this.mobMaxHp = 100 + this.mobLevel * 15;
     this.mobHp = this.mobMaxHp;
     this.armorHp = Math.random() < 0.2
       ? Math.floor(this.mobMaxHp * 0.5)

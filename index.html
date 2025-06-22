@@ -9,36 +9,48 @@
 <body>
   <div id="game">
     <div>
-  <h3>
-    💰 BTC: <span id="btc">0.0000</span>
-    &nbsp;|&nbsp;
-    💵 USD: <span id="usd">0.00</span>
-    &nbsp;|&nbsp;
-    🔄 Курс BTC→USD: <span id="rate">—</span>
-	<button id="refreshRateBtn" title="Обновить курс" style="background:none;border:none;color:inherit;font-size:1em;cursor:pointer;">🔄</button>
-  </h3>
-      <h4>Хеши: <span id="hashes">0</span></h4>
+      <h3 style="text-align: center;">
+        💰 BTC: <span id="btc">0.0000</span>
+        &nbsp;|&nbsp;
+        💵 USD: <span id="usd">0.00</span>
+        &nbsp;|&nbsp;
+        🔄 Курс BTC→USD: <span id="rate">—</span>
+        <button id="refreshRateBtn" title="Обновить курс" style="background:none;border:none;color:inherit;font-size:1em;cursor:pointer;">🔄</button>
+      </h3>
+
+      <!-- продать кнопки под курсом, по центру -->
+      <div style="display: flex; justify-content: center; gap: 12px; margin: 8px 0;">
+        <button id="sellHashesBtn">💱 Продать хеши</button>
+        <button id="sellBTCBtn">💲 Продать BTC</button>
+      </div>
+
+      <h4 style="text-align: center;">Хеши: <span id="hashes">0</span></h4>
       <div class="hp-bar">
         <div id="armorFill" class="armor-fill" style="width: 0%;"></div>
         <div id="hpFill" class="hp-fill" style="width: 100%;"></div>
       </div>
       <div id="clickMob" class="mob"></div>
+
       <div class="section">
-        <h4>🎛️ Слоты для видеокарт</h4>
+        <h4 style="display: flex; align-items: center; justify-content: space-between;">
+          🎛️ Слоты для видеокарт
+          <button id="toggleSlotsBtn" style="font-size: 0.9em; padding: 4px 8px;">+ Развернуть</button>
+        </h4>
         <div id="slots"></div>
       </div>
-      <div class="section">
+
+      <div class="section" style="text-align: center;">
         <button id="invBtn">📦 Инвентарь</button>
-        <button id="sellHashesBtn">💱 Продать хеши</button>
         <button id="shopBtn">🛒 Магазин</button>
-	    <button id="sellBTCBtn">💲 Продать BTC</button>
       </div>
     </div>
+
     <div class="section speed-buttons">
       <button data-speed="1">⏱ x1</button>
       <button data-speed="2">⚡ x2</button>
       <button data-speed="5">🚀 x5</button>
     </div>
+
     <div id="inventoryList" class="menu-overlay hidden"></div>
     <div id="shopMenu" class="menu-overlay hidden"></div>
     <div id="slotMenu" class="menu-overlay hidden"></div>
