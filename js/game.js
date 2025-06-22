@@ -3,7 +3,6 @@
 const Game = {
   // Balances and stats
   hashes: 0,                // accumulated hashes
-  hashesPerBTC: 1000000,
   btc: 0,                   // balance in BTC
   usd: 0,                   // balance in USD
   gameSpeed: 1,             // passive mining speed multiplier
@@ -11,6 +10,9 @@ const Game = {
   // Click upgrade parameters
   clickPower: 1,            // hashes per click
   clickUpgradeCostUSD: 50,  // initial cost of click upgrade
+
+  // Hashes to BTC conversion
+  hashesPerBTC: 1000000,    // how many hashes for 1 BTC
 
   // Mob info
   mobLevel: 1,
@@ -55,7 +57,7 @@ const Game = {
 
   // Set up a new mob
   updateMob() {
-    this.mobMaxHp = 100 + this.mobLevel * 20;
+    this.mobMaxHp = 25 + this.mobLevel * 10;
     this.mobHp = this.mobMaxHp;
     this.armorHp = Math.random() < 0.2
       ? Math.floor(this.mobMaxHp * 0.5)
@@ -87,8 +89,7 @@ const Game = {
       this.updateMob();
     }
 
-    const ach = this.checkAchievements();
-    return { damage, isCrit, ach };
+    return { damage, isCrit, ach: this.checkAchievements() };
   },
 
   // Passive mining from GPUs
@@ -100,7 +101,7 @@ const Game = {
     });
   },
 
-  // Sell hashes for BTC at 10000 hashes = 1 BTC
+  // Sell hashes for BTC by hashesPerBTC
   sellHashes() {
     const btcGain = this.hashes / this.hashesPerBTC;
     this.btc += btcGain;
@@ -111,9 +112,7 @@ const Game = {
   // Async sell all BTC to USD via Coinbase API
   async sellBTCForUSD() {
     const res = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
-    if (!res.ok) {
-      throw new Error('Не удалось получить курс с Coinbase');
-    }
+    if (!res.ok) throw new Error('Failed to fetch rate');
     const data = await res.json();
     const rate = parseFloat(data.data.rates.USD);
     const usdGain = this.btc * rate;
@@ -142,12 +141,36 @@ const Game = {
     }
   },
 
-  // Insert GPU into slot
+  // Insert or replace GPU in slot
   insertGPU(index, name) {
     const card = this.videoCards.find(c => c.name === name);
+    const existing = this.slots[index];
+    if (existing && existing.name) {
+      this.inventory[existing.name]++;
+    }
     this.slots[index] = card;
     this.inventory[name]--;
     this.achievements.firstGPU = true;
+  },
+
+  // Remove GPU from slot back to inventory
+  removeGPU(index) {
+    const existing = this.slots[index];
+    if (existing && existing.name) {
+      this.inventory[existing.name]++;
+      this.slots[index] = null;
+    }
+  },
+
+  // Sell a GPU from inventory for USD
+  sellCard(cardName) {
+    const card = this.videoCards.find(c => c.name === cardName);
+    if (this.inventory[cardName] > 0) {
+      this.inventory[cardName]--;
+      this.usd += card.costUSD;
+      return true;
+    }
+    return false;
   },
 
   // Buy click upgrade (+1 clickPower)
@@ -161,7 +184,7 @@ const Game = {
     return false;
   },
 
-  // Check achievements, return object or null
+  // Check achievements
   checkAchievements() {
     if (this.clickCount >= 100 && !this.achievements.clicks100) {
       this.achievements.clicks100 = true;
@@ -174,5 +197,3 @@ const Game = {
     return null;
   }
 };
-
-window.Game = Game;

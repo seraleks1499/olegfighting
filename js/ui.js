@@ -21,16 +21,15 @@ window.onload = () => {
     speedBtns: Array.from(document.querySelectorAll('.speed-buttons button'))
   };
 
-  // Fetch and display BTC→USD rate immediately and on demand
+  // Fetch and display BTC→USD rate
   async function fetchRate() {
     try {
       const res = await fetch('https://api.coinbase.com/v2/exchange-rates?currency=BTC');
-      if (!res.ok) throw new Error('Не удалось получить курс');
+      if (!res.ok) throw new Error('Failed to fetch rate');
       const data = await res.json();
       const rate = parseFloat(data.data.rates.USD);
       dom.rate.textContent = rate.toFixed(2);
-    } catch (err) {
-      console.error(err);
+    } catch {
       dom.rate.textContent = '—';
     }
   }
@@ -50,20 +49,19 @@ window.onload = () => {
       updateUI();
       alert(`Sold ${(usdGain / rate).toFixed(4)} BTC @ ${rate.toFixed(2)} → +${usdGain.toFixed(2)} USD`);
     } catch {
-      alert('❌ Could not fetch rate. Try again later.');
+      alert('❌ Could not fetch rate');
     }
   };
   dom.refreshRateBtn.onclick = fetchRate;
   dom.shopBtn.onclick        = () => toggleShop();
   dom.speedBtns.forEach(btn => btn.onclick = () => setSpeed(btn.dataset.speed));
 
-  // Initialize game & UI
+  // Init
   Game.init();
   fetchRate();
   setInterval(updateUI, 1000);
   updateUI();
 
-  // Handle a click on the mob
   function handleClick() {
     const { damage, isCrit, ach } = Game.clickMob();
     showDamage(damage, isCrit);
@@ -72,143 +70,137 @@ window.onload = () => {
     updateUI();
   }
 
-  // Show damage popup
   function showDamage(dmg, crit) {
-    const popup = document.createElement('div');
-    popup.className = 'damage-popup';
-    popup.textContent = crit ? `💥 -${dmg}` : `-${dmg}`;
-    dom.clickMob.appendChild(popup);
-    setTimeout(() => popup.remove(), 500);
+    const pop = document.createElement('div');
+    pop.className = 'damage-popup';
+    pop.textContent = crit ? `💥 -${dmg}` : `-${dmg}`;
+    dom.clickMob.appendChild(pop);
+    setTimeout(() => pop.remove(), 500);
   }
 
-  // Spawn clickable money emojis
   function spawnMoney(dmg) {
-    const container = document.getElementById('game');
-    const gameRect = container.getBoundingClientRect();
-    const mobRect  = dom.clickMob.getBoundingClientRect();
-    const baseX    = mobRect.left - gameRect.left + mobRect.width/2;
-    const baseY    = mobRect.top  - gameRect.top  + mobRect.height/2;
-
-    for (let i = 0; i < 6; i++) {
-      const emoji = document.createElement('div');
-      emoji.className = 'money-emoji';
-      emoji.textContent = '💰';
-      emoji.style.left = `${baseX}px`;
-      emoji.style.top  = `${baseY}px`;
-      container.appendChild(emoji);
-
-      const angle = Math.random() * 2 * Math.PI;
-      const dist  = 100 + Math.random() * 50;
-      requestAnimationFrame(() => {
-        emoji.style.transform = `translate(${Math.cos(angle)*dist}px,${Math.sin(angle)*dist}px)`;
-        emoji.style.opacity   = '0';
+    const cont = document.getElementById('game');
+    const gR = cont.getBoundingClientRect();
+    const mR = dom.clickMob.getBoundingClientRect();
+    const x0 = mR.left - gR.left + mR.width/2;
+    const y0 = mR.top  - gR.top  + mR.height/2;
+    for (let i=0; i<6; i++){
+      const e = document.createElement('div');
+      e.className='money-emoji'; e.textContent='💰';
+      e.style.left=`${x0}px`; e.style.top=`${y0}px`;
+      cont.appendChild(e);
+      const a=Math.random()*2*Math.PI, d=100+Math.random()*50;
+      requestAnimationFrame(()=>{
+        e.style.transform=`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px)`;
+        e.style.opacity='0';
       });
-
-      emoji.addEventListener('click', () => {
-        Game.hashes += dmg * 5;
-        container.removeChild(emoji);
-      }, { once: true });
-
-      setTimeout(() => {
-        if (emoji.parentNode) container.removeChild(emoji);
-      }, 5000);
+      e.addEventListener('click',()=>{
+        Game.hashes += dmg*5;
+        cont.removeChild(e);
+      },{once:true});
+      setTimeout(()=>{ if(e.parentNode) cont.removeChild(e); },5000);
     }
   }
 
-  // Update all UI elements
-  function updateUI() {
+  function updateUI(){
     dom.btc.textContent    = Game.btc.toFixed(4);
     dom.usd.textContent    = Game.usd.toFixed(2);
     dom.hashes.textContent = Game.hashes.toFixed(0);
-    renderHp();
-    renderSlots();
+    renderHp(); renderSlots();
   }
 
-  // Render mob health/armor and image
-  function renderHp() {
-    dom.hpFill.style.width = `${(Game.mobHp/Game.mobMaxHp)*100}%`;
-    dom.hpFill.style.background = Game.mobHp/Game.mobMaxHp > 0.3 ? '#0f0' : '#999';
+  function renderHp(){
+    dom.hpFill.style.width   = `${(Game.mobHp/Game.mobMaxHp)*100}%`;
+    dom.hpFill.style.background = Game.mobHp/Game.mobMaxHp>0.3?'#0f0':'#999';
     dom.armorFill.style.width   = `${(Game.armorHp/Game.mobMaxHp)*100}%`;
     dom.clickMob.style.backgroundImage = `url('assets/mob${(Game.mobLevel%10)+1}.png')`;
   }
 
-  // Render GPU slots
-  function renderSlots() {
-    dom.slots.innerHTML = '';
-    Game.slots.forEach((gpu,i) => {
-      const div = document.createElement('div');
-      div.className = 'slot';
-      if (gpu === 'locked') {
+  function renderSlots(){
+    dom.slots.innerHTML='';
+    Game.slots.forEach((gpu,i)=>{
+      const div=document.createElement('div');
+      div.className='slot';
+      if(gpu==='locked'){
         div.classList.add('locked');
-        div.textContent = `🔒 Slot ${i+1} ($${(i+1)*50})`;
-        div.onclick = () => { Game.unlockSlot(i); updateUI(); };
-      } else if (gpu === null) {
-        div.textContent = `+ Insert GPU into slot ${i+1}`;
-        div.onclick = () => openSlotMenu(i);
+        div.textContent=`🔒 Slot ${i+1} ($${(i+1)*50})`;
+        div.onclick=()=>{ Game.unlockSlot(i); updateUI(); };
       } else {
-        div.textContent = `${gpu.name} (${gpu.hashRate} h/s)`;
+        // и пустой, и заполненный слот обрабатываем одинаково
+        if(gpu===null){
+          div.textContent=`+ Insert GPU into slot ${i+1}`;
+        } else {
+          div.textContent=`${gpu.name} (${gpu.hashRate} h/s)`;
+        }
+        // клик по любому незаблокированному слоту открывает меню
+        div.onclick=()=>openSlotMenu(i);
       }
       dom.slots.appendChild(div);
     });
   }
 
-  // Open shop/inventory overlays
-  function openSlotMenu(index) {
+
+  function openSlotMenu(index){
     dom.slotMenu.classList.remove('hidden');
-    dom.slotMenu.innerHTML = '<div class="close-btn" onclick="closeSlotMenu()">×</div><h4>Select GPU:</h4>';
-    Object.entries(Game.inventory).forEach(([name,count]) => {
-      if (count > 0) {
-        const item = document.createElement('div');
-        item.className = 'menu-item';
-        item.textContent = `${name} (${count})`;
-        item.onclick = () => { Game.insertGPU(index,name); closeSlotMenu(); updateUI(); };
-        dom.slotMenu.appendChild(item);
+    dom.slotMenu.innerHTML = '<div class="close-btn" onclick="closeSlotMenu()">×</div><h4>Выберите видеокарту:</h4>';
+    if(Game.slots[index]){
+      const rm=document.createElement('div');
+      rm.className='menu-item'; rm.textContent='Удалить карту из слота';
+      rm.onclick=()=>{Game.removeGPU(index); closeSlotMenu(); updateUI();};
+      dom.slotMenu.appendChild(rm);
+    }
+    Object.entries(Game.inventory).forEach(([name,count])=>{
+      if(count>0){
+        const it=document.createElement('div');
+        it.className='menu-item'; it.textContent=`${name} (${count})`;
+        it.onclick=()=>{Game.insertGPU(index,name); closeSlotMenu(); updateUI();};
+        dom.slotMenu.appendChild(it);
       }
     });
   }
-  window.closeSlotMenu = () => dom.slotMenu.classList.add('hidden');
+  window.closeSlotMenu = ()=>dom.slotMenu.classList.add('hidden');
 
-  function toggleInventory() {
+  function toggleInventory(){
     dom.inventoryList.classList.toggle('hidden');
-    dom.inventoryList.innerHTML = '<div class="close-btn" onclick="toggleInventory()">×</div><h4>Inventory</h4>';
-    Object.entries(Game.inventory).forEach(([name,count]) => {
-      dom.inventoryList.innerHTML += `<div>${name}: ${count}</div>`;
+    dom.inventoryList.innerHTML = '<div class="close-btn" onclick="toggleInventory()">×</div><h4>📦 Инвентарь</h4>';
+    Object.entries(Game.inventory).forEach(([name,count])=>{
+      const it=document.createElement('div'); it.className='menu-item';
+      it.textContent=`${name}: ${count}`;
+      if(count>0){
+        const b=document.createElement('button'); b.textContent='Продать';
+        b.onclick=()=>{
+          if(Game.sellCard(name)){
+            updateUI(); alert(`Продана карта ${name} за $${Game.videoCards.find(c=>c.name===name).costUSD}`);
+          } else alert('Нет карт');
+        };
+        it.appendChild(b);
+      }
+      dom.inventoryList.appendChild(it);
     });
   }
 
-  function toggleShop() {
+  function toggleShop(){
     dom.shopMenu.classList.toggle('hidden');
     dom.shopMenu.innerHTML = '<div class="close-btn" onclick="toggleShop()">×</div><h4>🛒 Shop</h4>';
-
-    // Click upgrade option
-    const upg = document.createElement('div');
-    upg.className = 'menu-item';
-    upg.textContent = `Upgrade Click (+1) — $${Game.clickUpgradeCostUSD}`;
-    upg.onclick = () => {
-      if (Game.buyClickUpgrade()) {
-        updateUI();
-        alert(`Click power is now ${Game.clickPower} hashes per click.`);
-      } else {
-        alert('Not enough USD for click upgrade.');
-      }
+    const upg=document.createElement('div');
+    upg.className='menu-item';
+    upg.textContent=`Upgrade Click (+1) — $${Game.clickUpgradeCostUSD}`;
+    upg.onclick=()=>{
+      if(Game.buyClickUpgrade()){
+        updateUI(); alert(`Click power: ${Game.clickPower}`);
+      } else alert('Недостаточно USD');
     };
     dom.shopMenu.appendChild(upg);
-
-    // GPU shop items
-    Game.videoCards.forEach(card => {
-      const item = document.createElement('div');
-      item.className = 'menu-item';
-      item.textContent = `${card.name} — $${card.costUSD}`;
-      item.onclick = () => { Game.buyCard(card.name); updateUI(); };
-      dom.shopMenu.appendChild(item);
+    Game.videoCards.forEach(card=>{
+      const it=document.createElement('div');
+      it.className='menu-item'; it.textContent=`${card.name} — $${card.costUSD}`;
+      it.onclick=()=>{ Game.buyCard(card.name); updateUI(); };
+      dom.shopMenu.appendChild(it);
     });
   }
 
-  function setSpeed(s) {
-    Game.gameSpeed = Number(s);
-  }
+  function setSpeed(s){ Game.gameSpeed = Number(s); }
 
-  // Export for inline onclick handlers
   window.toggleShop = toggleShop;
   window.toggleInventory = toggleInventory;
 };
