@@ -2,154 +2,49 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Waker Egg Catcher</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #cdeaff; }
-    canvas { display: block; margin: 0 auto; background: #87ceeb; }
-    #gameCanvas { touch-action: none; }
-  </style>
+  <title>Idle GPU Miner</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-<canvas id="gameCanvas" width="480" height="640"></canvas>
-<script>
-  const canvas = document.getElementById('gameCanvas');
-  const ctx = canvas.getContext('2d');
+  <div id="game">
+    <div>
+  <h3>
+    💰 BTC: <span id="btc">0.0000</span>
+    &nbsp;|&nbsp;
+    💵 USD: <span id="usd">0.00</span>
+    &nbsp;|&nbsp;
+    🔄 Курс BTC→USD: <span id="rate">—</span>
+	<button id="refreshRateBtn" title="Обновить курс" style="background:none;border:none;color:inherit;font-size:1em;cursor:pointer;">🔄</button>
+  </h3>
+      <h4>Хеши: <span id="hashes">0</span></h4>
+      <div class="hp-bar">
+        <div id="armorFill" class="armor-fill" style="width: 0%;"></div>
+        <div id="hpFill" class="hp-fill" style="width: 100%;"></div>
+      </div>
+      <div id="clickMob" class="mob"></div>
+      <div class="section">
+        <h4>🎛️ Слоты для видеокарт</h4>
+        <div id="slots"></div>
+      </div>
+      <div class="section">
+        <button id="invBtn">📦 Инвентарь</button>
+        <button id="sellHashesBtn">💱 Продать хеши</button>
+        <button id="shopBtn">🛒 Магазин</button>
+	    <button id="sellBTCBtn">💲 Продать BTC</button>
+      </div>
+    </div>
+    <div class="section speed-buttons">
+      <button data-speed="1">⏱ x1</button>
+      <button data-speed="2">⚡ x2</button>
+      <button data-speed="5">🚀 x5</button>
+    </div>
+    <div id="inventoryList" class="menu-overlay hidden"></div>
+    <div id="shopMenu" class="menu-overlay hidden"></div>
+    <div id="slotMenu" class="menu-overlay hidden"></div>
+  </div>
 
-  const wakerImg = new Image();
-  const duckImg = new Image();
-  const eggImg = new Image();
-  wakerImg.src = 'waker.png';
-  duckImg.src = 'duck.png';
-  eggImg.src = 'egg.png';
-
-  const wakerPositions = [
-    { x: 60, y: 420 },
-    { x: 60, y: 520 },
-    { x: 300, y: 420 },
-    { x: 300, y: 520 }
-  ];
-
-  let waker = {
-    index: 0,
-    width: 80,
-    height: 80
-  };
-
-  const ducks = [
-    { x: 70, y: 100 },
-    { x: 70, y: 220 },
-    { x: 330, y: 100 },
-    { x: 330, y: 220 }
-  ];
-
-  const eggPaths = [
-    [ {x: 70, y:100}, {x:90, y:180}, {x:110, y:260}, {x:80, y:400} ],
-    [ {x:70, y:220}, {x:90, y:300}, {x:110, y:380}, {x:80, y:500} ],
-    [ {x:330, y:100}, {x:310, y:180}, {x:290, y:260}, {x:320, y:400} ],
-    [ {x:330, y:220}, {x:310, y:300}, {x:290, y:380}, {x:320, y:500} ]
-  ];
-
-  let eggs = [];
-  let eggDropInterval = 1800;
-  let lastEggDrop = 0;
-  let score = 0;
-
-  function dropEgg() {
-    const pathIndex = Math.floor(Math.random() * eggPaths.length);
-    const path = eggPaths[pathIndex];
-    const start = path[0];
-    const next = path[1];
-    eggs.push({
-      path,
-      index: 0,
-      x: start.x,
-      y: start.y,
-      targetX: next.x,
-      targetY: next.y,
-      progress: 0,
-      speed: 0.02
-    });
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ducks.forEach(duck => ctx.drawImage(duckImg, duck.x, duck.y, 40, 40));
-    const wPos = wakerPositions[waker.index];
-    ctx.drawImage(wakerImg, wPos.x, wPos.y, waker.width, waker.height);
-
-    eggs.forEach(egg => {
-      ctx.drawImage(eggImg, egg.x, egg.y, 20, 30);
-    });
-
-    ctx.fillStyle = 'black';
-    ctx.font = '20px Arial';
-    ctx.fillText('Score: ' + score, 10, 30);
-  }
-
-  function update() {
-    const now = Date.now();
-    if (now - lastEggDrop > eggDropInterval) {
-      dropEgg();
-      lastEggDrop = now;
-    }
-
-    eggs.forEach((egg, i) => {
-      egg.progress += egg.speed;
-      if (egg.progress >= 1) {
-        egg.index++;
-        if (egg.index >= egg.path.length - 1) {
-          const final = egg.path[egg.path.length - 1];
-          const wPos = wakerPositions[waker.index];
-          if (
-            final.x + 20 > wPos.x && final.x < wPos.x + waker.width &&
-            final.y + 30 > wPos.y && final.y < wPos.y + waker.height
-          ) {
-            score++;
-          }
-          eggs.splice(i, 1);
-        } else {
-          egg.x = egg.path[egg.index].x;
-          egg.y = egg.path[egg.index].y;
-          egg.targetX = egg.path[egg.index + 1].x;
-          egg.targetY = egg.path[egg.index + 1].y;
-          egg.progress = 0;
-        }
-      } else {
-        egg.x = egg.path[egg.index].x + (egg.targetX - egg.path[egg.index].x) * egg.progress;
-        egg.y = egg.path[egg.index].y + (egg.targetY - egg.path[egg.index].y) * egg.progress;
-      }
-    });
-  }
-
-  function gameLoop() {
-    draw();
-    update();
-    requestAnimationFrame(gameLoop);
-  }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft') waker.index = waker.index % 2 === 1 ? waker.index - 1 : waker.index;
-    if (e.key === 'ArrowRight') waker.index = waker.index % 2 === 0 ? waker.index + 1 : waker.index;
-    if (e.key === 'ArrowUp') waker.index = waker.index > 1 ? waker.index - 2 : waker.index;
-    if (e.key === 'ArrowDown') waker.index = waker.index < 2 ? waker.index + 2 : waker.index;
-  });
-
-  canvas.addEventListener('touchstart', handleTouch);
-  canvas.addEventListener('touchmove', handleTouch);
-
-  function handleTouch(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.touches[0].clientX - rect.left;
-    const y = e.touches[0].clientY - rect.top;
-
-    if (x < canvas.width / 2 && y < canvas.height / 2) waker.index = 0;
-    else if (x < canvas.width / 2) waker.index = 1;
-    else if (y < canvas.height / 2) waker.index = 2;
-    else waker.index = 3;
-  }
-
-  wakerImg.onload = () => requestAnimationFrame(gameLoop);
-</script>
+  <script src="js/game.js"></script>
+  <script src="js/ui.js"></script>
 </body>
 </html>

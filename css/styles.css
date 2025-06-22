@@ -1,0 +1,148 @@
+body {
+  margin: 0;
+  background: #1a1a1a;
+  color: #fff;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+#game {
+  width: 100%;
+  max-width: 400px;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+}
+.slot {
+  width: 100%;
+  height: 60px;
+  background: #333;
+  margin: 8px 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+.locked {
+  background: #555;
+  opacity: 0.6;
+}
+button {
+  margin: 5px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background: #28a745;
+  color: white;
+  font-size: 14px;
+}
+.speed-buttons button {
+  background: #007bff;
+}
+.section {
+  margin-top: 10px;
+}
+.hidden {
+  display: none;
+}
+.menu-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10;
+  padding: 20px;
+  overflow-y: auto;
+}
+.menu-item {
+  padding: 6px;
+  margin: 4px 0;
+  background: #444;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
+.mob {
+  margin: 10px auto 5px;
+  width: 100px;
+  height: 100px;
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  cursor: pointer;
+  transition: transform 0.1s;
+  position: relative;
+  user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+}
+.mob:active {
+  transform: scale(0.9);
+}
+.hp-bar {
+  width: 100%;
+  height: 10px;
+  background: #555;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 5px;
+  position: relative;
+}
+.hp-fill {
+  height: 100%;
+  background: #0f0;
+  transition: width 0.3s;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.armor-fill {
+  height: 100%;
+  background: red;
+  transition: width 0.3s;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+}
+.damage-popup {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: red;
+  font-weight: bold;
+  font-size: 18px;
+  animation: popup 0.5s ease-out;
+}
+@keyframes popup {
+  0% { opacity: 1; top: 10px; }
+  100% { opacity: 0; top: -20px; }
+}
+/* эмоджи 💰, летающие и исчезающие */
+.money-emoji {
+  position: absolute;
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+  pointer-events: auto;
+  transition: transform 5s linear, opacity 5s linear;
+}
