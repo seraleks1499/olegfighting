@@ -1,62 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <title>Idle GPU Miner</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <link rel="stylesheet" href="css/styles.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Магазин Картинок</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      background-color: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+    }
+    .balance {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 18px;
+    }
+    .container {
+      margin-top: 100px;
+      text-align: center;
+    }
+    .image-wrapper {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+    }
+    .main-image, .censor {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .censor {
+      background-color: rgba(0,0,0,0.8);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 32px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 18px;
+      background: gold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #000;
+    }
+    .info {
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
 </head>
 <body>
-  <div id="game">
-    <div>
-      <h3 style="text-align: center;">
-        💰 BTC: <span id="btc">0.0000</span>
-        &nbsp;|&nbsp;
-        💵 USD: <span id="usd">0.00</span>
-        &nbsp;|&nbsp;
-        🔄 Курс BTC→USD: <span id="rate">—</span>
-        <button id="refreshRateBtn" title="Обновить курс" style="background:none;border:none;color:inherit;font-size:1em;cursor:pointer;">🔄</button>
-      </h3>
-
-      <!-- продать кнопки под курсом, по центру -->
-      <div style="display: flex; justify-content: center; gap: 12px; margin: 8px 0;">
-        <button id="sellHashesBtn">💱 Продать хеши</button>
-        <button id="sellBTCBtn">💲 Продать BTC</button>
-      </div>
-
-      <h4 style="text-align: center;">Хеши: <span id="hashes">0</span></h4>
-      <div class="hp-bar">
-        <div id="armorFill" class="armor-fill" style="width: 0%;"></div>
-        <div id="hpFill" class="hp-fill" style="width: 100%;"></div>
-      </div>
-      <div id="clickMob" class="mob"></div>
-
-      <div class="section">
-        <h4 style="display: flex; align-items: center; justify-content: space-between;">
-          🎛️ Слоты для видеокарт
-          <button id="toggleSlotsBtn" style="font-size: 0.9em; padding: 4px 8px;">+ Развернуть</button>
-        </h4>
-        <div id="slots"></div>
-      </div>
-
-      <div class="section" style="text-align: center;">
-        <button id="invBtn">📦 Инвентарь</button>
-        <button id="shopBtn">🛒 Магазин</button>
-      </div>
+  <div class="balance">⭐ 500</div>
+  <div class="container">
+    <div class="image-wrapper">
+      <img src="1.jpg" class="main-image" id="mainImage">
+      <div class="censor" id="censor">5</div>
     </div>
-
-    <div class="section speed-buttons">
-      <button data-speed="1">⏱ x1</button>
-      <button data-speed="2">⚡ x2</button>
-      <button data-speed="5">🚀 x5</button>
+    <button onclick="buyImage()">Улучшить за 15 ⭐</button>
+    <div class="info" id="info">
+      <p>Модель: Котик</p>
+      <p>Фон: Случайный</p>
+      <p>Узор: Нет</p>
     </div>
-
-    <div id="inventoryList" class="menu-overlay hidden"></div>
-    <div id="shopMenu" class="menu-overlay hidden"></div>
-    <div id="slotMenu" class="menu-overlay hidden"></div>
   </div>
 
-  <script src="js/game.js"></script>
-  <script src="js/ui.js"></script>
+  <script>
+    let balance = 500;
+    const balanceDiv = document.querySelector(".balance");
+    const censor = document.getElementById("censor");
+    const image = document.getElementById("mainImage");
+    const info = document.getElementById("info");
+    let images = [
+      {
+        url: "2.png",
+        model: "Sleep Deprived",
+        background: "Deep Void",
+        pattern: "Stars"
+      },
+      {
+        url: "3.png",
+        model: "Glitch Kitty",
+        background: "Code Green",
+        pattern: "Circuit Lines"
+      },
+      {
+        url: "4.png",
+        model: "Mint-Eyed",
+        background: "Scanlines Purple",
+        pattern: "Ton Symbols"
+      }
+    ];
+
+    function buyImage() {
+      if (balance < 15) return alert("Недостаточно звёздочек!");
+
+      balance -= 15;
+      balanceDiv.innerText = `⭐ ${balance}`;
+
+      censor.style.display = "flex";
+      info.style.display = "none";
+
+      let seconds = 5;
+      censor.innerText = seconds;
+
+      const timer = setInterval(() => {
+        seconds--;
+        if (seconds === 0) {
+          clearInterval(timer);
+          censor.style.display = "none";
+
+          const next = images[Math.floor(Math.random() * images.length)];
+          image.src = next.url;
+          info.innerHTML = `
+            <p>Модель: ${next.model}</p>
+            <p>Фон: ${next.background}</p>
+            <p>Узор: ${next.pattern}</p>
+          `;
+          info.style.display = "block";
+        } else {
+          censor.innerText = seconds;
+        }
+      }, 1000);
+    }
+  </script>
 </body>
 </html>
