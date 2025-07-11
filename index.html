@@ -1,143 +1,96 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Магазин Картинок</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📻 Genre Radio</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-      background-color: #111;
-      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      background: #121212;
+      color: white;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      height: 100vh;
+      padding: 2rem;
     }
-    .balance {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 18px;
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
     }
-    .container {
-      margin-top: 100px;
-      text-align: center;
-    }
-    .image-wrapper {
-      position: relative;
-      width: 300px;
-      height: 300px;
-      margin: 0 auto;
-    }
-    .main-image, .censor {
-      position: absolute;
-      top: 0;
-      left: 0;
+
+    .genre-btn {
       width: 100%;
-      height: 100%;
-      object-fit: cover;
+      max-width: 300px;
+      margin: 0.5rem 0;
+      padding: 1rem;
+      background: #1e1e1e;
+      border: 2px solid #333;
       border-radius: 12px;
-    }
-    .censor {
-      background-color: rgba(0,0,0,0.8);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      font-size: 32px;
-    }
-    button {
-      margin-top: 20px;
-      padding: 12px 20px;
-      font-size: 18px;
-      background: gold;
-      border: none;
-      border-radius: 8px;
+      text-align: center;
+      font-size: 1.2rem;
       cursor: pointer;
-      color: #000;
+      transition: background 0.3s;
     }
-    .info {
-      margin-top: 20px;
-      display: none;
+
+    .genre-btn:hover {
+      background: #2a2a2a;
+    }
+
+    audio {
+      margin-top: 2rem;
+      width: 100%;
+      max-width: 320px;
+    }
+
+    .now-playing {
+      margin-top: 1rem;
+      font-size: 1rem;
+      color: #aaa;
     }
   </style>
 </head>
 <body>
-  <div class="balance">⭐ 500</div>
-  <div class="container">
-    <div class="image-wrapper">
-      <img src="1.jpg" class="main-image" id="mainImage">
-      <div class="censor" id="censor">5</div>
-    </div>
-    <button onclick="buyImage()">Улучшить за 15 ⭐</button>
-    <div class="info" id="info">
-      <p>Модель: Котик</p>
-      <p>Фон: Случайный</p>
-      <p>Узор: Нет</p>
-    </div>
-  </div>
+  <h1>Выбери жанр 🎶</h1>
+
+  <div class="genre-btn" onclick="playRadio('pop')">🎧 Pop</div>
+  <div class="genre-btn" onclick="playRadio('electronic')">🔊 Electronic</div>
+
+  <audio id="radioPlayer" controls autoplay></audio>
+  <div class="now-playing" id="nowPlayingText">Ничего не играет</div>
 
   <script>
-    let balance = 500;
-    const balanceDiv = document.querySelector(".balance");
-    const censor = document.getElementById("censor");
-    const image = document.getElementById("mainImage");
-    const info = document.getElementById("info");
-    let images = [
-      {
-        url: "2.png",
-        model: "Sleep Deprived",
-        background: "Deep Void",
-        pattern: "Stars"
+    const stations = {
+      pop: {
+        name: "Pop Radio",
+        url: "https://stream-uk1.radioparadise.com/aac-320" // заменяем при желании
       },
-      {
-        url: "3.png",
-        model: "Glitch Kitty",
-        background: "Code Green",
-        pattern: "Circuit Lines"
+      rock: {
+        name: "Rock FM",
+        url: "https://rfcmedia.streamguys1.com/classicrock.mp3"
       },
-      {
-        url: "4.png",
-        model: "Mint-Eyed",
-        background: "Scanlines Purple",
-        pattern: "Ton Symbols"
+      jazz: {
+        name: "Jazz24",
+        url: "https://live.wostreaming.net/direct/ppm-jazz24aac-64"
+      },
+      electronic: {
+        name: "Electro Lounge",
+        url: "https://streaming.radionomy.com/ElectroLounge"
       }
-    ];
+    };
 
-    function buyImage() {
-      if (balance < 15) return alert("Недостаточно звёздочек!");
+    function playRadio(genre) {
+      const player = document.getElementById('radioPlayer');
+      const nowText = document.getElementById('nowPlayingText');
+      const selected = stations[genre];
+      
+      if (!selected) return;
 
-      balance -= 15;
-      balanceDiv.innerText = `⭐ ${balance}`;
+      player.src = selected.url;
+      player.play().catch(console.error);
 
-      censor.style.display = "flex";
-      info.style.display = "none";
-
-      let seconds = 5;
-      censor.innerText = seconds;
-
-      const timer = setInterval(() => {
-        seconds--;
-        if (seconds === 0) {
-          clearInterval(timer);
-          censor.style.display = "none";
-
-          const next = images[Math.floor(Math.random() * images.length)];
-          image.src = next.url;
-          info.innerHTML = `
-            <p>Модель: ${next.model}</p>
-            <p>Фон: ${next.background}</p>
-            <p>Узор: ${next.pattern}</p>
-          `;
-          info.style.display = "block";
-        } else {
-          censor.innerText = seconds;
-        }
-      }, 1000);
+      nowText.textContent = `▶️ Сейчас играет: ${selected.name}`;
     }
   </script>
 </body>
